@@ -459,7 +459,7 @@ class DiT(nn.Module):
 
         self.blocks = nn.ModuleList(
             [
-                DiTBlock(hidden_size, num_heads, mlp_ratio=mlp_ratio)
+                DITBlock(hidden_size, num_heads, mlp_ratio=mlp_ratio)
                 for _ in range(depth)
             ]
         )
