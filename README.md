@@ -72,7 +72,7 @@ python sample.py --model DiT-L/4 --image-size 256 --ckpt /path/to/model.pt
 To extract ImageNet features with `1` GPUs on one node:
 
 ```bash
-torchrun --nnodes=1 --nproc_per_node=1 extract_features.py --model DiT-XL/2 --data-path /path/to/imagenet/train --features-path /path/to/store/features
+torchrun --nnodes=1 --nproc_per_node=1 extract_features.py --model DiT-S/8 --data-path ~/repo/imagenet-val --features-path ./features
 ```
 
 ### Training DiT
@@ -83,7 +83,7 @@ DiT models, but it can be easily modified to support other types of conditioning
 To launch DiT-XL/2 (256x256) training with `1` GPUs on one node:
 
 ```bash
-accelerate launch --mixed_precision fp16 train.py --model DiT-XL/2 --features-path /path/to/store/features
+accelerate launch --mixed_precision fp16 train.py --model DiT-S/8 --features-path ~/repo/imagenet-val
 ```
 
 To launch DiT-XL/2 (256x256) training with `N` GPUs on one node:
