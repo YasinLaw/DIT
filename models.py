@@ -259,20 +259,21 @@ class Mixer(nn.Module):
         self.proj_drop = nn.Dropout(proj_drop)
 
     def forward(self, x):
-        B, H, W, C = x.shape
-        x = x.permute(0, 3, 1, 2)
+        B, N, C = x.shape
+        x = x.view(B, int(math.sqrt(N)), int(math.sqrt(N)), C)
+        x = x.permute(0, 3, 1, 2)  # B C H W
 
-        hx = x[:, : self.high_dim, :, :].contiguous()
+        hx = x[:, : self.high_dim, :, :].contiguous()  # B C/2 H W
         hx = self.high_mixer(hx)
 
-        lx = x[:, self.high_dim :, :, :].contiguous()
+        lx = x[:, self.high_dim :, :, :].contiguous()  # B C/2 H W
         lx = self.low_mixer(lx)
 
-        x = torch.cat((hx, lx), dim=1)
+        x = torch.cat((hx, lx), dim=1)  # B C H W
         x = x + self.conv_fuse(x)
         x = self.proj(x)
         x = self.proj_drop(x)
-        x = x.permute(0, 2, 3, 1).contiguous()
+        x = x.permute(0, 2, 3, 1).contiguous()  # B H W C
         return x
 
 
@@ -336,6 +337,7 @@ class DITBlock(nn.Module):
             )
 
     def forward(self, x, c):
+        B, N, C = x.shape
         shift_msa, scale_msa, gate_msa, shift_mlp, scale_mlp, gate_mlp = (
             self.adaLN_modulation(c).chunk(6, dim=1)
         )
@@ -343,7 +345,9 @@ class DITBlock(nn.Module):
             x = x + self.drop_path(
                 self.layer_scale_1
                 * gate_msa.unsqueeze(1)
-                * self.attn(modulate(self.norm1(x), shift_msa, scale_msa))
+                * self.attn(modulate(self.norm1(x), shift_msa, scale_msa)).view(
+                    B, -1, C
+                )
             )
             x = x + self.drop_path(
                 self.layer_scale_2
@@ -353,7 +357,9 @@ class DITBlock(nn.Module):
         else:
             x = x + self.drop_path(
                 gate_msa.unsqueeze(1)
-                * self.attn(modulate(self.norm1(x), shift_msa, scale_msa))
+                * self.attn(modulate(self.norm1(x), shift_msa, scale_msa)).view(
+                    B, -1, C
+                )
             )
             x = x + self.drop_path(
                 gate_mlp.unsqueeze(1)

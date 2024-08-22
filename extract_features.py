@@ -196,7 +196,7 @@ def main(args):
         np.save(f"{args.features_path}/imagenet256_labels/{train_steps}.npy", y)
 
         train_steps += 1
-        print(train_steps)
+        print(str(train_steps) + "\t\t" + str(len(loader)))
 
 
 if __name__ == "__main__":
