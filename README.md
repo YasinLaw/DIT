@@ -83,7 +83,7 @@ DiT models, but it can be easily modified to support other types of conditioning
 To launch DiT-XL/2 (256x256) training with `1` GPUs on one node:
 
 ```bash
-accelerate launch --mixed_precision fp16 train.py --model DiT-S/8 --features-path ~/repo/DIT/features
+accelerate launch --mixed_precision fp16 train.py --model DiT-S/8 --feature-path ~/repo/DIT/features
 ```
 
 To launch DiT-XL/2 (256x256) training with `N` GPUs on one node:

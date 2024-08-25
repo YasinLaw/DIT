@@ -33,6 +33,8 @@ from models import DiT_models
 from diffusion import create_diffusion
 from diffusers.models import AutoencoderKL
 
+from schedulefree import AdamWScheduleFree
+
 
 #################################################################################
 #                             Training Helper Functions                         #
@@ -176,7 +178,8 @@ def main(args):
         logger.info(f"DiT Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
     # Setup optimizer (we used default Adam betas=(0.9, 0.999) and a constant learning rate of 1e-4 in our paper):
-    opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=0)
+    # opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=0)
+    opt = AdamWScheduleFree(model.parameters(), lr=1e-4, weight_decay=0)
 
     # Setup data:
     features_dir = f"{args.feature_path}/imagenet256_features"
@@ -196,6 +199,7 @@ def main(args):
     # Prepare models for training:
     update_ema(ema, model, decay=0)  # Ensure EMA is initialized with synced weights
     model.train()  # important! This enables embedding dropout for classifier-free guidance
+    opt.train()  # important for schedulefree optimizer
     ema.eval()  # EMA model should always be in eval mode
     model, opt, loader = accelerator.prepare(model, opt, loader)
 
@@ -259,6 +263,7 @@ def main(args):
                     logger.info(f"Saved checkpoint to {checkpoint_path}")
 
     model.eval()  # important! This disables randomized embedding dropout
+    opt.eval()  # important for schedulefree optimizer
     # do any sampling/FID calculation/etc. with ema (or model) in eval mode ...
 
     if accelerator.is_main_process:
@@ -275,7 +280,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--image-size", type=int, choices=[256, 512], default=256)
     parser.add_argument("--num-classes", type=int, default=1000)
-    parser.add_argument("--epochs", type=int, default=100)
+    parser.add_argument("--epochs", type=int, default=500)
     parser.add_argument("--global-batch-size", type=int, default=256)
     parser.add_argument("--global-seed", type=int, default=0)
     parser.add_argument(
